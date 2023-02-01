@@ -429,6 +429,7 @@ function attendance_add_status($status) {
         $status->visible = 1;
         $status->setunmarked = 0;
         $status->availablebeforesession = 0;
+        $status->allowupdatestatus = 0;
 
         $id = $DB->insert_record('attendance_statuses', $status);
         $status->id = $id;
@@ -489,11 +490,13 @@ function attendance_remove_status($status, $context = null, $cm = null) {
  * @param stdClass $cm
  * @param int $studentavailability
  * @param bool $availablebeforesession
+ * @param bool $allowupdatestatus
  * @param bool $setunmarked
  * @return array
  */
 function attendance_update_status($status, $acronym, $description, $grade, $visible,
-                                  $context = null, $cm = null, $studentavailability = null, $availablebeforesession = false, $setunmarked = false) {
+                                  $context = null, $cm = null, $studentavailability = null,
+                                  $availablebeforesession = false, $allowupdatestatus = false, $setunmarked = false) {
     global $DB;
 
     if (empty($context)) {
@@ -536,6 +539,11 @@ function attendance_update_status($status, $acronym, $description, $grade, $visi
     } else {
         $status->availablebeforesession = 1;
     }
+    if (strpos(strval($allowupdatestatus), 'on') === false) {
+        $status->allowupdatestatus = 0;
+    } else {
+        $status->allowupdatestatus = 1;
+    }
     if ($setunmarked) {
         $status->setunmarked = 1;
     } else {
@@ -573,6 +581,20 @@ function attendance_random_string($length=6) {
         $string .= substr($pool, ($rand % ($poollen)), 1);
     }
     return $string;
+}
+
+/**
+ * Does this status have allowupdatestatus enabled.
+ *
+ * @param int $sessionid the id in attendance_sessions.
+ * @return boolean
+ */
+function check_allow_update_status($sessionid) {
+    global $DB, $USER;
+    $sql = "SELECT s.allowupdatestatus FROM {attendance_statuses} s
+              LEFT JOIN {attendance_log} l ON s.id = l.statusid
+              WHERE s.deleted = 0 AND s.visible = 1 AND l.sessionid = :sessionid AND studentid = :studentid";
+    return $DB->get_field_sql($sql, array('sessionid' => $sessionid, 'studentid' => $USER->id));
 }
 
 /**

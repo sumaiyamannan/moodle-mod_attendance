@@ -1351,8 +1351,15 @@ class renderer extends plugin_renderer_base {
             }
 
             if (!empty($sess->statusid)) {
+                $updatelink = '';
                 $status = $userdata->statuses[$sess->statusid];
-                $row->cells[] = $status->description;
+                list($canmark, $reason) = attendance_can_student_mark($sess, false);
+                if (check_allow_update_status($sess->id) && $canmark) {
+                    $url = new moodle_url('/mod/attendance/attendance.php',
+                                array('sessid' => $sess->id, 'sesskey' => sesskey()));
+                    $updatelink = "<br>".html_writer::link($url, get_string('updateattendance', 'attendance'));
+                }
+                $row->cells[] = $status->description.$updatelink;
                 $row->cells[] = format_float($status->grade, 1, true, true) . ' / ' .
                                     format_float($statussetmaxpoints[$status->setnumber], 1, true, true);
                 $row->cells[] = $sess->remarks;
@@ -2667,6 +2674,10 @@ class renderer extends plugin_renderer_base {
             $this->output->help_icon('availablebeforesession', 'attendance');
         $table->align[] = 'center';
 
+        $table->head[] = get_string('allowupdatestatus', 'attendance').
+        $this->output->help_icon('allowupdatestatus', 'attendance');
+        $table->align[] = 'center';
+
         $table->head[] = get_string('setunmarked', 'attendance').
             $this->output->help_icon('setunmarked', 'attendance');
         $table->align[] = 'center';
@@ -2697,6 +2708,11 @@ class renderer extends plugin_renderer_base {
                 $checked = ' checked ';
             }
             $cells[] = '<input type="checkbox" name="availablebeforesession['.$st->id.']" '.$checked.'>';
+            $checked = '';
+            if ($st->allowupdatestatus) {
+                $checked = ' checked ';
+            }
+            $cells[] = '<input type="checkbox" name="allowupdatestatus['.$st->id.']" '.$checked.'>';
             $checked = '';
             if ($st->setunmarked) {
                 $checked = ' checked ';

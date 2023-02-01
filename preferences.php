@@ -134,6 +134,7 @@ switch ($att->pageparams->action) {
         $grade          = required_param_array('grade', PARAM_RAW);
         $studentavailability = optional_param_array('studentavailability', null, PARAM_RAW);
         $availablebeforesession = optional_param_array('availablebeforesession', '0', PARAM_RAW);
+        $allowupdatestatus = optional_param_array('allowupdatestatus', '0', PARAM_RAW);
         $unmarkedstatus = optional_param('setunmarked', null, PARAM_INT);
 
         foreach ($grade as &$val) {
@@ -150,8 +151,12 @@ switch ($att->pageparams->action) {
             if (!isset($availablebeforesession[$id])) {
                 $availablebeforesession[$id] = 0;
             }
+            if (!isset($allowupdatestatus[$id])) {
+                $allowupdatestatus[$id] = 0;
+            }
             $errors[$id] = attendance_update_status($status, $acronym[$id], $description[$id], $grade[$id],
-                                                    null, $att->context, $att->cm, $studentavailability[$id], $availablebeforesession[$id], $setunmarked);
+                                                    null, $att->context, $att->cm, $studentavailability[$id],
+                                                    $availablebeforesession[$id], $allowupdatestatus[$id], $setunmarked);
         }
         attendance_update_users_grade($att);
         break;
