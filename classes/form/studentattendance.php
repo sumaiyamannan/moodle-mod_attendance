@@ -36,7 +36,7 @@ class studentattendance extends \moodleform {
      * @return void
      */
     public function definition() {
-        global $USER;
+        global $USER, $DB;
 
         $mform  =& $this->_form;
 
@@ -61,6 +61,10 @@ class studentattendance extends \moodleform {
                 }
                 // If the session isn't open yet and this status isn't available before session - hide it.
                 if ($status->availablebeforesession == 0 && time() < $attforsession->sessdate - $attforsession->studentsearlyopentime) {
+                    unset($statuses[$status->id]);
+                }
+                // If the status has already been submitted before, hide it.
+                if ($DB->record_exists('attendance_log', ['statusid' => $status->id, 'studentid' => $USER->id, 'sessionid' => $attforsession->id])) {
                     unset($statuses[$status->id]);
                 }
             }

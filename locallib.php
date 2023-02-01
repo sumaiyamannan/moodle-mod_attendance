@@ -429,6 +429,7 @@ function attendance_add_status($status) {
         $status->visible = 1;
         $status->setunmarked = 0;
         $status->availablebeforesession = 0;
+        $status->allowupdatestatus = 0;
 
         $id = $DB->insert_record('attendance_statuses', $status);
         $status->id = $id;
@@ -489,11 +490,13 @@ function attendance_remove_status($status, $context = null, $cm = null) {
  * @param stdClass $cm
  * @param int $studentavailability
  * @param bool $availablebeforesession
+ * @param bool $allowupdatestatus
  * @param bool $setunmarked
  * @return array
  */
 function attendance_update_status($status, $acronym, $description, $grade, $visible,
-                                  $context = null, $cm = null, $studentavailability = null, $availablebeforesession = false, $setunmarked = false) {
+                                  $context = null, $cm = null, $studentavailability = null,
+                                  $availablebeforesession = false, $allowupdatestatus = null, $setunmarked = false) {
     global $DB;
 
     if (empty($context)) {
@@ -536,6 +539,11 @@ function attendance_update_status($status, $acronym, $description, $grade, $visi
     } else {
         $status->availablebeforesession = 1;
     }
+    if (strpos(strval($allowupdatestatus), 'on') === false) {
+        $status->allowupdatestatus = 0;
+    } else {
+        $status->allowupdatestatus = 1;
+    }
     if ($setunmarked) {
         $status->setunmarked = 1;
     } else {
@@ -576,12 +584,33 @@ function attendance_random_string($length=6) {
 }
 
 /**
- * Does this session have a status with availablebeforesession enabled.
+ * Check to see if this status have allowupdatestatus enabled and has it been recorded before.
+ *
+ * @param int $sessionid the id in attendance_sessions.
+ * @param int $statusid the id in attendance_statuses.
+ * @return boolean
+ */
+function attendance_check_allow_update_status($sessionid, $statusid = null) {
+    global $DB, $USER;
+    $checkbystatus = '';
+    if ($statusid) {
+        $checkbystatus = ' AND statusid = :statusid';
+    }
+    $sql = "SELECT s.id FROM {attendance_statuses} s
+              LEFT JOIN {attendance_log} l ON s.id = l.statusid
+              WHERE s.deleted = 0 AND s.visible = 1 AND l.sessionid = :sessionid AND studentid = :studentid
+               AND s.allowupdatestatus = 1".$checkbystatus;
+
+    return $DB->record_exists_sql($sql, array('sessionid' => $sessionid, 'studentid' => $USER->id, 'statusid' => $statusid));
+}
+
+/**
+ * Check to see if this session have a status with availablebeforesession enabled.
  *
  * @param int $sessionid the id in attendance_sessions.
  * @return boolean
  */
-function is_status_availablebeforesession($sessionid) {
+function attendance_is_status_availablebeforesession($sessionid) {
     global $DB;
 
     $attendanceid = $DB->get_field('attendance_sessions', 'attendanceid', array('id' => $sessionid));
@@ -605,7 +634,7 @@ function attendance_can_student_mark($sess, $log = true) {
 
     if (!empty($attconfig->studentscanmark) && !empty($sess->studentscanmark)) {
         if (empty($attconfig->studentscanmarksessiontime) ||
-            (is_status_availablebeforesession($sess->id)) && time() < $sess->sessdate) {
+            (attendance_is_status_availablebeforesession($sess->id)) && time() < $sess->sessdate) {
             $canmark = true;
             $reason = '';
         } else {

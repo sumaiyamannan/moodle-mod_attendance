@@ -567,6 +567,8 @@ $string['studentavailability_help'] = 'When students are marking their own atten
  <br/>If empty, this status will always be available, If set to 0 it will always be hidden to students.';
  $string['availablebeforesession'] = 'Available before session start';
 $string['availablebeforesession_help'] = 'When students are marking their own attendance, allow this status to be chosen before the session begins. ';
+$string['allowupdatestatus'] = 'Allow student to update';
+$string['allowupdatestatus_help'] = 'Allow a student to update their attendance for a session after they have already self-reported it. ';
 $string['studentid'] = 'Student ID';
 $string['studentmarked'] = 'Your attendance in this session has been recorded.';
 $string['studentmarking'] = 'Student recording';
@@ -670,3 +672,4 @@ $string['messagedselecteduserfailed'] = 'Failed to send a message to one or more
 $string['cannottakethisgroup'] = 'You are not a member of the course group that this attendance session relates to, your attendance has not been recorded.';
 $string['customfields'] = 'Custom session fields';
 $string['manualtriggerauto'] = 'Manually trigger automatic marking';
+$string['updateattendance'] = 'Update attendance';
